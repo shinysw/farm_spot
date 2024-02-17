@@ -15,7 +15,7 @@ class ArduinoSerialCommunicator:
 
     def send_message(self, message):
         print("Sending:", message)
-        message += "\n"6t
+        message += "\n"
         for char in message:
             self.serial_port.write(char.encode('utf-8'))
             time.sleep(0.1)
