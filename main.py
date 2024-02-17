@@ -18,7 +18,6 @@ class ArduinoSerialCommunicator:
         message += "\n"  # Append newline to indicate the end of the message
         self.serial_port.write(message.encode('ascii'))  # Encode and send the entire message at once
 
-
     def receive_message(self):
         message = ""
         while True:
@@ -64,7 +63,7 @@ def main():
     #     print("Received from Arduino:", response)
 
     for _ in range(20):
-        arduino_communicator.send_message("Test Message")
+        arduino_communicator.send_message("TEST:")
         response = arduino_communicator.receive_message()
         print("Received from Arduino:", response)
         time.sleep(1)  # Wait for a second before the next iteration
