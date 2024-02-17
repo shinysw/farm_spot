@@ -9,7 +9,7 @@ SPOT_USERNAME = "admin"
 SPOT_PASSWORD = "asdfadsf"
 
 class ArduinoSerialCommunicator:
-    def __init__(self, port="/dev/ttyTHS1", baudrate=9600):
+    def __init__(self, port="/dev/ttyTHS1", baudrate=4800):
         self.serial_port = serial.Serial(port=port, baudrate=baudrate, timeout=0.5)
         time.sleep(1)  # Wait for port initialization
 
