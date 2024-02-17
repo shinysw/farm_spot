@@ -63,7 +63,7 @@ def main():
     #     print("Received from Arduino:", response)
 
     for _ in range(20):
-        arduino_communicator.send_message("TEST:")
+        arduino_communicator.send_message("TEST")
         response = arduino_communicator.receive_message()
         print("Received from Arduino:", response)
         time.sleep(1)  # Wait for a second before the next iteration
