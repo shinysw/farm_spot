@@ -1,13 +1,41 @@
 import os
 import time
+import serial
+import cv2
 from spot_controller import SpotController
 
-ROBOT_IP = "10.0.0.3"#os.environ['ROBOT_IP']
-SPOT_USERNAME = "admin"#os.environ['SPOT_USERNAME']
-SPOT_PASSWORD = "2zqa8dgw7lor"#os.environ['SPOT_PASSWORD']
+ROBOT_IP = "10.0.0.3"
+SPOT_USERNAME = "admin"
+SPOT_PASSWORD = "asdfadsf"
 
+class ArduinoSerialCommunicator:
+    def __init__(self, port="/dev/ttyTHS1", baudrate=9600):
+        self.serial_port = serial.Serial(port=port, baudrate=baudrate, timeout=0.5)
+        time.sleep(1)  # Wait for port initialization
+
+    def send_message(self, message):
+        print("Sending:", message)
+        message += "\n"6t
+        for char in message:
+            self.serial_port.write(char.encode('utf-8'))
+            time.sleep(0.1)
+
+    def receive_message(self):
+        message = ""
+        while True:
+            if self.serial_port.inWaiting() > 0:
+                data = self.serial_port.read()
+                message += data.decode('utf-8')
+                if data == b"\n":
+                    break
+        return message
+
+    def close(self):
+        self.serial_port.close()
 
 def main():
+    arduino_communicator = ArduinoSerialCommunicator()
+
     #example of using micro and speakers
     print("Start recording audio")
     sample_name = "aaaa.wav"
@@ -16,9 +44,8 @@ def main():
     os.system(cmd)
     print("Playing sound")
     os.system(f"ffplay -nodisp -autoexit -loglevel quiet {sample_name}")
-    
+
     # Capture image
-    import cv2
     camera_capture = cv2.VideoCapture(0)
     rv, image = camera_capture.read()
     print(f"Image Dimensions: {image.shape}")
@@ -27,24 +54,18 @@ def main():
     # Use wrapper in context manager to lease control, turn on E-Stop, power on the robot and stand up at start
     # and to return lease + sit down at the end
     with SpotController(username=SPOT_USERNAME, password=SPOT_PASSWORD, robot_ip=ROBOT_IP) as spot:
-
         time.sleep(2)
 
-        # Move head to specified positions with intermediate time.sleep
-        spot.move_head_in_points(yaws=[0.2, 0],
-                                 pitches=[0.3, 0],
-                                 rolls=[0.4, 0],
-                                 sleep_after_point_reached=1)
+        spot.move_head_in_points(yaws=[0.2, 0], pitches=[0.3, 0], rolls=[0.4, 0], sleep_after_point_reached=1)
         time.sleep(3)
 
-        # Make Spot to move by goal_x meters forward and goal_y meters left
-        spot.move_to_goal(goal_x=0.5, goal_y=0)
-        time.sleep(3)
 
-        # Control Spot by velocity in m/s (or in rad/s for rotation)
-        spot.move_by_velocity_control(v_x=-0.3, v_y=0, v_rot=0, cmd_duration=2)
-        time.sleep(3)
+        arduino_communicator.send_message("Test Message")
+        response = arduino_communicator.receive_message()
+        print("Received from Arduino:", response)
 
+
+    arduino_communicator.close()
 
 if __name__ == '__main__':
     main()
