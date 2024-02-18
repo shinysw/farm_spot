@@ -45,6 +45,7 @@ class ArduinoSerialCommunicator:
             if self.serial_port.inWaiting() > 0:
                 incoming_message = self.serial_port.readline().decode('utf-8').strip()
                 print(f"Received: {incoming_message}")
+
                 if incoming_message == "SPIN":
                     print("Spinning...")
                     # Add code for spin action here
@@ -79,10 +80,11 @@ def main():
     # os.system(f"ffplay -nodisp -autoexit -loglevel quiet {sample_name}")
 
     # # Capture image
-    # camera_capture = cv2.VideoCapture(0)
-    # rv, image = camera_capture.read()
-    # print(f"Image Dimensions: {image.shape}")
-    # camera_capture.release()
+    camera_capture = cv2.VideoCapture(0)
+    rv, image = camera_capture.read()
+    print(f"Image Dimensions: {image.shape}")
+    camera_capture.release()
+
 
     # Use wrapper in context manager to lease control, turn on E-Stop, power on the robot and stand up at start
     # and to return lease + sit down at the end
