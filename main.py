@@ -39,6 +39,20 @@ class ArduinoSerialCommunicator:
         message += "\n"  # Append newline to indicate the end of the message
         self.serial_port.write(message.encode('ascii'))  # Encode and send the entire message at once
 
+    def listen_for_commands(self, duration=30):
+        start_time = time.time()
+        while time.time() - start_time < duration:
+            if self.serial_port.inWaiting() > 0:
+                incoming_message = self.serial_port.readline().decode('utf-8').strip()
+                print(f"Received: {incoming_message}")
+                if incoming_message == "SPIN":
+                    print("Spinning...")
+                    # Add code for spin action here
+                elif incoming_message == "STOP":
+                    print("Stopping...")
+                    # Add code for stop action here
+            time.sleep(0.1)  # Small delay to prevent high CPU usage
+
     def receive_message(self):
         message = ""
         while True:
@@ -82,18 +96,19 @@ def main():
     #     arduino_communicator.send_message("Test Message")
     #     response = arduino_communicator.receive_message()
     #     print("Received from Arduino:", response)
-    get_container_ip()
+    # get_container_ip()
 
-    for _ in range(10):
-        arduino_communicator.send_message("SPIN")
-        response = arduino_communicator.receive_message()
-        print("Received from Arduino:", response)
-        time.sleep(1)  # Wait for a second before the next iteration
-        arduino_communicator.send_message("STOP")
-        response = arduino_communicator.receive_message()
-        print("Received from Arduino:", response)
-        time.sleep(1)
+    # for _ in range(10):
+    #     arduino_communicator.send_message("SPIN")
+    #     response = arduino_communicator.receive_message()
+    #     print("Received from Arduino:", response)
+    #     time.sleep(1)  # Wait for a second before the next iteration
+    #     arduino_communicator.send_message("STOP")
+    #     response = arduino_communicator.receive_message()
+    #     print("Received from Arduino:", response)
+    #     time.sleep(1)
 
+    arduino_communicator.listen_for_commands(30)  # Listen for commands for 30 seconds
 
 
     arduino_communicator.close()
