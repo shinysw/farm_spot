@@ -4,11 +4,32 @@ import serial
 import cv2
 from spot_controller import SpotController
 import socket
-
+from flask import Flask, Response
 
 ROBOT_IP = "10.0.0.3"
 SPOT_USERNAME = "admin"
 SPOT_PASSWORD = "asdfadsf"
+
+app = Flask(__name__)
+
+def gen_frames():
+    camera_capture = cv2.VideoCapture(0)  # Use the first camera
+    while True:
+        success, frame = camera_capture.read()  # Read the camera frame
+        if not success:
+            break
+        else:
+            # Encode the frame in JPEG format
+            ret, buffer = cv2.imencode('.jpg', frame)
+            frame = buffer.tobytes()
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+@app.route('/video_feed')
+def video_feed():
+    # This route returns response that streams the camera feed
+    return Response(gen_frames(),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 def get_container_ip():
@@ -69,6 +90,8 @@ class ArduinoSerialCommunicator:
 
 def main():
     arduino_communicator = ArduinoSerialCommunicator()
+
+    app.run(host='0.0.0.0', port=5000, debug=True, threaded=True, use_reloader=False)
 
     #example of using micro and speakers
     # print("Start recording audio")
