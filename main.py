@@ -62,26 +62,16 @@ def main():
     #     response = arduino_communicator.receive_message()
     #     print("Received from Arduino:", response)
 
-    # for _ in range(20):
-    #     arduino_communicator.send_message("TEST")
-    #     response = arduino_communicator.receive_message()
-    #     print("Received from Arduino:", response)
-    #     time.sleep(1)  # Wait for a second before the next iteration
-
-    while True:
-        # Prompt the user for a command
-        command = input("Enter command for Arduino: ")
-
-        # Check if the user wants to exit
-        if command.lower() == 'exit':
-            break
-
-        # Send the command to the Arduino
-        arduino_communicator.send_message(command)
-
-        # Wait for and print the response from the Arduino
+    for _ in range(20):
+        arduino_communicator.send_message("SPIN")
         response = arduino_communicator.receive_message()
         print("Received from Arduino:", response)
+        time.sleep(1)  # Wait for a second before the next iteration
+        arduino_communicator.send_message("STOP")
+        response = arduino_communicator.receive_message()
+        print("Received from Arduino:", response)
+        time.sleep(1)
+
 
 
     arduino_communicator.close()
