@@ -3,10 +3,31 @@ import time
 import serial
 import cv2
 from spot_controller import SpotController
+import socket
+
 
 ROBOT_IP = "10.0.0.3"
 SPOT_USERNAME = "admin"
 SPOT_PASSWORD = "asdfadsf"
+
+
+def get_container_ip():
+    try:
+        # Create a socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # Use Google's Public DNS server to find the best route
+        # This does not actually create a connection
+        s.connect(("8.8.8.8", 80))
+        # Get the socket's own address
+        ip_address = s.getsockname()[0]
+        s.close()
+    except Exception as e:
+        ip_address = "Unable to determine IP address"
+    return ip_address
+
+# Print the container's IP address
+print(f"Container IP Address: {get_container_ip()}")
+
 
 class ArduinoSerialCommunicator:
     def __init__(self, port="/dev/ttyTHS1", baudrate=4800):
@@ -62,7 +83,7 @@ def main():
     #     response = arduino_communicator.receive_message()
     #     print("Received from Arduino:", response)
 
-    for _ in range(20):
+    for _ in range(10):
         arduino_communicator.send_message("SPIN")
         response = arduino_communicator.receive_message()
         print("Received from Arduino:", response)
