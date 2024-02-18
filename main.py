@@ -8,7 +8,7 @@ from flask import Flask, Response
 
 ROBOT_IP = "10.0.0.3"
 SPOT_USERNAME = "admin"
-SPOT_PASSWORD = "asdfadsf"
+SPOT_PASSWORD = "2zqa8dgw7lor"
 
 app = Flask(__name__)
 
@@ -32,33 +32,29 @@ def video_feed():
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
-def get_container_ip():
-    try:
-        # Create a socket
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        # Use Google's Public DNS server to find the best route
-        # This does not actually create a connection
-        s.connect(("8.8.8.8", 80))
-        # Get the socket's own address
-        ip_address = s.getsockname()[0]
-        s.close()
-    except Exception as e:
-        ip_address = "Unable to determine IP address"
-    return ip_address
+# def get_container_ip():
+#     try:
+#         # Create a socket
+#         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+#         # Use Google's Public DNS server to find the best route
+#         # This does not actually create a connection
+#         s.connect(("8.8.8.8", 80))
+#         # Get the socket's own address
+#         ip_address = s.getsockname()[0]
+#         s.close()
+#     except Exception as e:
+#         ip_address = "Unable to determine IP address"
+#     return ip_address
 
-# Print the container's IP address
-print(f"Container IP Address: {get_container_ip()}")
+# # Print the container's IP address
+# print(f"Container IP Address: {get_container_ip()}")
 
 
 class ArduinoSerialCommunicator:
-    def __init__(self, port="/dev/ttyTHS1", baudrate=4800):
+    def __init__(self, port="/dev/ttyTHS1", baudrate=4800, spot_controller=None):
         self.serial_port = serial.Serial(port=port, baudrate=baudrate, timeout=0.5)
+        self.spot_controller = spot_controller  # SpotController instance
         time.sleep(1)  # Wait for port initialization
-
-    def send_message(self, message):
-        print("Sending:", message)
-        message += "\n"  # Append newline to indicate the end of the message
-        self.serial_port.write(message.encode('ascii'))  # Encode and send the entire message at once
 
     def listen_for_commands(self, duration=30):
         start_time = time.time()
@@ -67,12 +63,41 @@ class ArduinoSerialCommunicator:
                 incoming_message = self.serial_port.readline().decode('utf-8').strip()
                 print(f"Received: {incoming_message}")
 
-                if incoming_message == "SPIN":
+                # Execute Spot commands based on the incoming message
+                if self.spot_controller:
+                    if incoming_message == "STEP_FORWARD":
+                        print("Moving forward...")
+                        # Small positive velocity to move forward, with a short duration
+                        self.spot_controller.move_by_velocity_control(v_x=0.1, v_y=0.0, v_rot=0.0, cmd_duration=0.5)
+                        time.sleep(0.5)
+
+
+                    elif incoming_message == "STEP_BACK":
+                        print("Moving backward...")
+                        # Small negative velocity to move backward, with a short duration
+                        self.spot_controller.move_by_velocity_control(v_x=-0.1, v_y=0.0, v_rot=0.0, cmd_duration=0.5)
+                        time.sleep(0.5)
+
+                    elif incoming_message == "TURN_LEFT":
+                        print("Turning left...")
+                        # Small positive rotational velocity to turn left, with a short duration
+                        self.spot_controller.move_by_velocity_control(v_x=0.0, v_y=0.0, v_rot=0.1, cmd_duration=0.5)
+                        time.sleep(0.5)
+
+                    elif incoming_message == "TURN_RIGHT":
+                        print("Turning right...")
+                        # Small negative rotational velocity to turn right, with a short duration
+                        self.spot_controller.move_by_velocity_control(v_x=0.0, v_y=0.0, v_rot=-0.1, cmd_duration=0.5)
+                        time.sleep(0.5)
+
+                # Handle other Arduino-specific commands as needed
+                elif incoming_message == "SPIN":
                     print("Spinning...")
                     # Add code for spin action here
                 elif incoming_message == "STOP":
                     print("Stopping...")
                     # Add code for stop action here
+
             time.sleep(0.1)  # Small delay to prevent high CPU usage
 
     def receive_message(self):
@@ -89,9 +114,9 @@ class ArduinoSerialCommunicator:
         self.serial_port.close()
 
 def main():
-    arduino_communicator = ArduinoSerialCommunicator()
+    # arduino_communicator = ArduinoSerialCommunicator()
 
-    app.run(host='0.0.0.0', port=5000, debug=True, threaded=True, use_reloader=False)
+    # app.run(host='0.0.0.0', port=5000, debug=True, threaded=True, use_reloader=False)
 
     #example of using micro and speakers
     # print("Start recording audio")
@@ -103,10 +128,10 @@ def main():
     # os.system(f"ffplay -nodisp -autoexit -loglevel quiet {sample_name}")
 
     # # Capture image
-    camera_capture = cv2.VideoCapture(0)
-    rv, image = camera_capture.read()
-    print(f"Image Dimensions: {image.shape}")
-    camera_capture.release()
+    # camera_capture = cv2.VideoCapture(0)
+    # rv, image = camera_capture.read()
+    # print(f"Image Dimensions: {image.shape}")
+    # camera_capture.release()
 
 
     # Use wrapper in context manager to lease control, turn on E-Stop, power on the robot and stand up at start
@@ -133,10 +158,15 @@ def main():
     #     print("Received from Arduino:", response)
     #     time.sleep(1)
 
-    arduino_communicator.listen_for_commands(30)  # Listen for commands for 30 seconds
+    # arduino_communicator.listen_for_commands(30)  # Listen for commands for 30 seconds
+    # arduino_communicator.close()
 
+    with SpotController(username=SPOT_USERNAME, password=SPOT_PASSWORD, robot_ip=ROBOT_IP) as spot:
+        arduino_communicator = ArduinoSerialCommunicator(spot_controller=spot)
+        app.run(host='0.0.0.0', port=5000, debug=True, threaded=True, use_reloader=False)
+        arduino_communicator.listen_for_commands(30)
+        arduino_communicator.close()
 
-    arduino_communicator.close()
 
 if __name__ == '__main__':
     main()
