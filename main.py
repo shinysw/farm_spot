@@ -82,6 +82,7 @@ def main():
     #     arduino_communicator.send_message("Test Message")
     #     response = arduino_communicator.receive_message()
     #     print("Received from Arduino:", response)
+    get_container_ip()
 
     for _ in range(10):
         arduino_communicator.send_message("SPIN")
